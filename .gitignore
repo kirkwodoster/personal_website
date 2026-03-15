@@ -1,0 +1,29 @@
+# Environment variables
+.env
+
+# Keys & secrets
+/key/
+/ssh/
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+dist/
+
+# Dependencies
+node_modules/
+
+# Build
+build/
+
+# Logs & temp
+*.log
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db

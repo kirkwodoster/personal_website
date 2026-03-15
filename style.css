@@ -1,0 +1,10 @@
+body {
+  background-color: lightgoldenrodyellow;
+}
+
+/* This targets ALL columns */
+div[data-testid="stHorizontalBlock"] > div {
+  background-color: #1B1A55;
+  
+}
+

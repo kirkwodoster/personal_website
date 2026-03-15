@@ -1,0 +1,13 @@
+streamlit
+pandas
+numpy
+pillow
+pybase64
+pathlib
+plotly
+pytz
+cryptography
+requests
+typing
+python-dotenv
+pytest-playwright
