@@ -310,10 +310,21 @@ def historical_balances():
 
 def crypto_historical():
     
+    # client = Client(
+    #         api_key=os.getenv('BINANCE_TESTNET_API_KEY'),
+    #         api_secret=os.getenv('BINANCE_TESTNET_API_SECRET'),
+    #     )
+    
     client = Client(
-            api_key=os.getenv('BINANCE_TESTNET_API_KEY'),
-            api_secret=os.getenv('BINANCE_TESTNET_API_SECRET'),
-        )
+        api_key=os.getenv('BINANCE_TESTNET_API_KEY'),
+        api_secret=os.getenv('BINANCE_TESTNET_API_SECRET'),
+        requests_params={
+            'proxies': {
+                'http':  'socks5h://127.0.0.1:9050',
+                'https': 'socks5h://127.0.0.1:9050'
+            }
+        }
+    )
     client.FUTURES_URL      = 'https://testnet.binancefuture.com/fapi'
     client.FUTURES_DATA_URL = 'https://testnet.binancefuture.com/fapi'
     
@@ -363,9 +374,20 @@ def crypto_historical():
 
 def crypto_open_positions():
 
+    # client = Client(
+    #     api_key=os.getenv('BINANCE_TESTNET_API_KEY'),
+    #     api_secret=os.getenv('BINANCE_TESTNET_API_SECRET'),
+    # )
+    
     client = Client(
         api_key=os.getenv('BINANCE_TESTNET_API_KEY'),
         api_secret=os.getenv('BINANCE_TESTNET_API_SECRET'),
+        requests_params={
+            'proxies': {
+                'http':  'socks5h://127.0.0.1:9050',
+                'https': 'socks5h://127.0.0.1:9050'
+            }
+        }
     )
     client.FUTURES_URL      = 'https://testnet.binancefuture.com/fapi'
     client.FUTURES_DATA_URL = 'https://testnet.binancefuture.com/fapi'
