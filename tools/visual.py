@@ -6,6 +6,7 @@ from tools.clients import client
 from datetime import datetime
 import plotly.graph_objects as go
 import plotly.express as px
+from scipy.stats import  t
 import time
 from pathlib import Path
 from plotly.subplots import make_subplots
@@ -392,13 +393,178 @@ def bar_chart_total_return(data):
     fig.update_xaxes(fixedrange=True)
                                 
     return fig
+
+
+
+##################################### COPULA ###########################################
+
+########################################################################################    
+def copula_plot(alpha, u1, u2, h1_2, h2_1, h1_2_prior, h2_1_prior, nu, rho):
+    u1 = np.array(u1)
+    u2 = np.array(u2)
+
+    confidence = 1 - alpha
+
+    # Confidence band calculation
+    u_grid       = np.linspace(0.001, 0.999, 400)
+    x_grid_t     = t.ppf(u_grid, df=nu)
+    cond_mean    = rho * x_grid_t
+    scale_factor = (nu + x_grid_t**2) / (nu + 1)
+    cond_scale   = np.sqrt(scale_factor * (1 - rho**2))
+    y_low_t      = t.ppf(alpha,     df=nu + 1) * cond_scale + cond_mean
+    y_high_t     = t.ppf(1 - alpha, df=nu + 1) * cond_scale + cond_mean
+    v_low        = t.cdf(y_low_t,  df=nu)
+    v_high       = t.cdf(y_high_t, df=nu)
+
+    # Historical background point colors (Formation data)
+    hist_x_t          = t.ppf(u1, df=nu)
+    hist_y_t          = t.ppf(u2, df=nu)
+    hist_cond_mean    = rho * hist_x_t
+    hist_scale        = np.sqrt(((nu + hist_x_t**2) / (nu + 1)) * (1 - rho**2))
+    hist_limit_low_t  = t.ppf(alpha,     df=nu + 1) * hist_scale + hist_cond_mean
+    hist_limit_high_t = t.ppf(1 - alpha, df=nu + 1) * hist_scale + hist_cond_mean
+    is_inside         = (hist_y_t >= hist_limit_low_t) & (hist_y_t <= hist_limit_high_t)
+    hist_colors       = np.where(is_inside, '#0099C6', '#DC3912')
+    hist_opacity      = np.where(is_inside, 0.5, 1.0)
+
+    # Logic for the Current point color
+    idx            = (np.abs(u_grid - h1_2)).argmin() if h1_2 is not None else 0
+    is_inside_curr = v_low[idx] <= h2_1 <= v_high[idx] if h2_1 is not None else False
+
+    fig = go.Figure()
+
+    # 1. Background Historical (Formation) Data
+    fig.add_trace(go.Scatter(
+        x=u1, y=u2,
+        mode='markers',
+        name='Formation Data',
+        marker=dict(color=hist_colors.tolist(), opacity=hist_opacity.tolist(), size=5)
+    ))
+
+    # 2. Confidence Bands
+    fig.add_trace(go.Scatter(
+        x=u_grid, y=v_high,
+        mode='lines',
+        line=dict(color='#FF9900', width=2),
+        name=f'Upper Band ({confidence:.0%})'
+    ))
+    fig.add_trace(go.Scatter(
+        x=u_grid, y=v_low,
+        mode='lines',
+        line=dict(color='#FF9900', width=2),
+        name=f'Lower Band ({confidence:.0%})',
+        fill='tonexty',
+        fillcolor='rgba(255,153,0,0.1)'
+    ))
+
+    # 3. The Path (All signals EXCEPT most recent)
+    if h1_2_prior and h2_1_prior:
+        fig.add_trace(go.Scatter(
+            x=h1_2_prior, 
+            y=h2_1_prior,
+            mode='markers',
+            # name='Signal Path',
+            # line=dict(color='white', width=1, dash='dot'),
+            marker=dict(color='white', size=4, opacity=0.7)
+        ))
+
+    # 4. Current Live Point (Most recent)
+    if h1_2 is not None and h2_1 is not None:
+        fig.add_trace(go.Scatter(
+            x=[h1_2], y=[h2_1],
+            mode='markers',
+            name=f'Live ({"Inside" if is_inside_curr else "OUTSIDE"})',
+            marker=dict(
+                color='green' if is_inside_curr else 'yellow', 
+                size=15, 
+                symbol='star',
+                line=dict(width=2, color='white')
+            )
+        ))
+
+    fig.update_layout(
+        title=dict(
+            text=f'Student-T Copula  ρ:{rho:.3f}  dof:{nu:.1f}  {confidence:.0%} bands',
+            font=dict(size=25, color='white'),
+            x=0.5,      # centre the title
+            xanchor='center'
+        ),
+        xaxis_title='u1',
+        yaxis_title='u2',
+        xaxis=dict(range=[0, 1]),
+        yaxis=dict(range=[0, 1]),
+        template='plotly_dark',
+        legend=dict(x=0.01, y=0.99),
+        height=550
+    )
+
+    return fig
+
+##################################### Coin Plot #######################################
+
+#######################################################################################
+
+def coin_chart(alt1_prices_fit, alt2_prices_fit,
+               recent_alt1_price, recent_alt2_price,
+               coin1_name, coin2_name, recent_dt_index,
+               api_dt_index):
     
+# Both are now milliseconds — same conversion for both
+    recent_dt_index = [
+        datetime.fromtimestamp(int(x) / 1000).strftime("%b-%d %H:%M")
+        for x in recent_dt_index
+    ]
+    api_dt_index = [
+        datetime.fromtimestamp(int(x) / 1000).strftime("%b-%d %H:%M")
+        for x in api_dt_index
+    ]
+
+    date = api_dt_index + recent_dt_index
+    date      = date[-1000:]
+        # Combine formation + live prices
+    alt1_combined = pd.Series(alt1_prices_fit + recent_alt1_price)
+    alt2_combined = pd.Series(alt2_prices_fit + recent_alt2_price)
+
+    # Normalise to cumulative returns so both coins are on same scale
+    alt1_norm = alt1_combined.pct_change().dropna().cumsum() * 100
+    alt2_norm = alt2_combined.pct_change().dropna().cumsum() * 100
+    
+    alt1_norm = alt1_norm.iloc[-1000:]
+    alt2_norm = alt2_norm.iloc[-1000:]
+
     
 
+    fig = go.Figure()
 
+    fig.add_trace(go.Scatter(
+        x=date, y=alt1_norm.tolist(),
+        mode='lines',
+        name=f'{coin1_name}',
+        line=dict(color='#00d4ff', width=1.5)
+    ))
 
+    fig.add_trace(go.Scatter(
+        x=date, y=alt2_norm.tolist(),
+        mode='lines',
+        name=f'{coin2_name}',
+        line=dict(color='#ff6b6b', width=1.5)
+    ))
+
+    fig.update_layout(
+        title=f'Price — {coin1_name} vs {coin2_name} (cumulative % return)',
+        xaxis_title='Time',
+        yaxis_title='Cumulative Return (%)',
+        template='plotly_dark',
+        legend=dict(x=0.01, y=0.99)
         
-            
+    )
+    fig.update_xaxes(tickangle=45,ticklabelstep=3) 
+
+    return fig
+
+
+
+
         
         
                 

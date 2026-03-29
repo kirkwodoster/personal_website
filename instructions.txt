@@ -1,5 +1,8 @@
 instructions
 
+https://ckpersonalweb.duckdns.org/
+
+
 python -m venv .venv
 Set-ExecutionPolicy RemoteSigned -Scope LocalMachine
 restart vs code
@@ -14,4 +17,4 @@ python -m streamlit run "main.py" --server.address 0.0.0.0 --server.port 8501 --
 0 5 * * * /sbin/shutdown -r now
 
 # 2. On reboot, wait 2 minutes, delete the old log, then start the Streamlit app.
-@reboot /bin/bash -c 'sleep 120 && rm -f /root/streamlit.log && /root/myenv/bin/python -m streamlit run "/root/myenv/my_resume/main.py" --server.address 0.0.0.0 --server.port 8501 --server.enableCORS false --server.enableXsrfProtection false >> /root/streamlit.log 2>&1'
+@reboot /bin/bash -c 'sleep 120 && rm -f /root/streamlit.log && /root/myenv/bin/python -m streamlit run "/root/myenv/personal_website/main.py" --server.address 0.0.0.0 --server.port 8501 --server.enableCORS false --server.enableXsrfProtection false >> /root/streamlit.log 2>&1'

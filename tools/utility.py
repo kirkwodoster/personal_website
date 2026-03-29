@@ -6,6 +6,11 @@ import pandas as pd
 import streamlit as st
 import os
 import plotly.graph_objects as go
+from binance.client import Client
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 ### Kalshi Weather Algo ###
 def yes_title(position: str):
@@ -298,6 +303,100 @@ def historical_balances():
             pass
     return date_balance_dict
 
+##################################### Crypto Historic Trades ##########################
+
+#######################################################################################
 
 
-# def win_rate
+def crypto_historical():
+    
+    client = Client(
+            api_key=os.getenv('BINANCE_TESTNET_API_KEY'),
+            api_secret=os.getenv('BINANCE_TESTNET_API_SECRET'),
+        )
+    client.FUTURES_URL      = 'https://testnet.binancefuture.com/fapi'
+    client.FUTURES_DATA_URL = 'https://testnet.binancefuture.com/fapi'
+    
+    historic_crypto_trades = client.futures_account_trades()
+    
+    data_dict = {
+        'Time': [],
+        'Symbol': [],
+        'Side': [],
+        'Price': [],
+        'Quantity': [],
+
+    }
+
+    for i in range(len(historic_crypto_trades)):
+        dicts = historic_crypto_trades[i]
+
+        data_dict['Symbol'].append(dicts.get('symbol'))
+        data_dict['Side'].append(dicts.get('side'))
+        price = dicts.get('price')
+        data_dict['Price'].append(price)
+        data_dict['Quantity'].append(dicts.get('qty'))
+        time = dicts.get('time')
+        date = datetime.fromtimestamp(int(time) / 1000).strftime("%b-%d %H:%M")
+        data_dict['Time'].append(date)
+        
+    header_style = {
+                    'selector': 'th',
+                    'props': [
+                    ('color', 'white !important'),
+              
+            ]
+        }
+    
+    position_df = pd.DataFrame(data_dict)#.set_index('time', inplace=True)
+    position_df = position_df.set_index('Time')
+    # print(position_df)
+    position_df = position_df.style.set_table_styles([header_style])
+    st_df = st.table(position_df)
+    
+    return st_df
+        
+    
+##################################### Crypto Open Trades ##########################
+
+###################################################################################
+
+def crypto_open_positions():
+
+    client = Client(
+        api_key=os.getenv('BINANCE_TESTNET_API_KEY'),
+        api_secret=os.getenv('BINANCE_TESTNET_API_SECRET'),
+    )
+    client.FUTURES_URL      = 'https://testnet.binancefuture.com/fapi'
+    client.FUTURES_DATA_URL = 'https://testnet.binancefuture.com/fapi'
+
+    try:
+        account = client.futures_account()
+
+        open_positions = [
+            p for p in account['positions']
+            if float(p['positionAmt']) != 0
+        ]
+
+        last_2 = open_positions[-2:]
+
+        if len(last_2) < 2:
+            return None   # not enough open positions
+
+        symbols     = [p['symbol'].replace('USDT', '') for p in last_2]
+        sides       = [float(p['positionAmt']) for p in last_2]
+        pnls        = [float(p['unrealizedProfit']) for p in last_2]
+        entry_prices = [float(p['entryPrice']) for p in last_2]
+
+        side_1 = 'Long' if sides[0] > 0 else 'Short'
+        side_2 = 'Long' if sides[1] > 0 else 'Short'
+
+        both_sides       = f'{side_1} {symbols[0]} / {side_2} {symbols[1]}'
+        unrealized_gl    = sum(pnls)
+        unrealized_formatted = f'{unrealized_gl:.2f}'
+
+    except Exception as e:
+        # print(f"crypto_open_positions error: {e}")
+        return None
+
+    return both_sides, unrealized_formatted

@@ -22,35 +22,14 @@ pages = {
         ],
         "Personal Projects": [
         st.Page('pages/projects/weatheralgo/weatheralgo.py', title='Algo Trading Bot'),
-
+        st.Page('pages/projects/crypto/crypto.py', title='Crypto Trading Bot'),
         ]
         }
 
 pg = st.navigation(pages, position='top', expanded=True,)
 
-# st.html("""
-# <style>
-# .stAppHeader {
-#     background-color:#023020;
-# }
-# </style>
-# """)     
-
 if __name__ == '__main__':
-    
-    # fees_dict = client.get_positions()['orders']
 
-     
-    # for j in fees_dict:
-    #     fees_datetime = j.get('last_update_time')
-    #     fees_date = fees_datetime.split('T')[0]
-    #     fees = j.get('taker_fees')
-    #     # fees_cents = (float(fees)) * -1
-    #     # print(fees_dict)
-    #     print(fees_dict)
-        
-        
-        
     pg.run()
 
 
