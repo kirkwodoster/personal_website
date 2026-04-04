@@ -33,6 +33,8 @@ try:
         recent_dt_index   = data.get('recent_dt_index') or []
         signal_history    = data.get('signal_history') or []
         api_dt_index      = data.get('api_dt_index') or []
+        crypto_historical = data.get('crypto_historical') or []
+        crypto_open_positions = data.get('crypto_open_positions') or []
 
         if not signal_history:
             h1_2_latest    = None
@@ -118,11 +120,11 @@ try:
                     pos_col1, pos_col2 = st.columns(2, border=True)
                     with pos_col1:
                         st.subheader("Open Position")
-                        open_position = utility.crypto_open_positions()[0]
+                        open_position = crypto_open_positions[0]
                         st.subheader(open_position if open_position else "- - | - -")
                     with pos_col2:
                         st.subheader("Unrealized PnL")
-                        unrealizedpnl = utility.crypto_open_positions()[1]
+                        unrealizedpnl = crypto_open_positions[1]
                         st.subheader(unrealizedpnl if unrealizedpnl else "- - | - -")
 
                     # Price chart underneath
@@ -142,7 +144,7 @@ try:
                         st.plotly_chart(fig, use_container_width=True,  config={'displayModeBar': False})
                         # Historical trades below
             with st.container():
-                utility.crypto_historical()
+                utility.crypto_historical(data_dict=crypto_historical)
 
 except Exception as e:
     st.error(f"Error communicating with Backend: {e}")
