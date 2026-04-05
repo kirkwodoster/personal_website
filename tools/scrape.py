@@ -12,6 +12,8 @@ import pandas as pd
 import time
 import pytz
 from pathlib import Path
+import re
+from bs4 import BeautifulSoup
 
 def all_markets(hour=8):
     all_markets = {
@@ -124,71 +126,97 @@ def rand_proxy_api():
     
     return {'server': server, 'username': username, 'password': password}
 
-
 def scrape_nws(url):
-    random_proxy = rand_proxy_api()
-    random_user_agent =  get_random_user_agent()
-    
+    time.sleep(50)
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            proxy={
-                                    'server': random_proxy['server'],
-                                    'username': random_proxy['username'],
-                                    'password': random_proxy['password']
-                                    },
-                                    headless=True)  # Set headless=True for background execution
-        
-        context = browser.new_context(
-        user_agent= random_user_agent,
-        viewport={'width': 1920, 'height': 1080}, # Set a common viewport size
-        # locale="en-US" # Set a common locale
-             )
-        page = context.new_page()
+        browser = p.chromium.launch()
+        page = browser.new_page()
         page.goto(url)
+        
+        # Wait until the specific element is present
+        page.wait_for_selector('#temperature')
+        
+        # Now grab the fully rendered HTML
+        html = page.content()
+        browser.close()
+    
+    soup = BeautifulSoup(html, 'html.parser')
+    onclick = soup.find('th', {'id': 'temperature'})['onclick']
+    
+    match = re.search(r"makeLineChart\('([^']+)','([^']+)'", onclick)
+    
+    if match:
+        timestamps = match.group(1).split(',')
+        timestamps = pd.to_datetime(timestamps)
+        temps = [float(t) for t in match.group(2).split(',')]
+        return temps, timestamps
+    
+    return None
 
-        try:
+# def scrape_nws(url):
+#     random_proxy = rand_proxy_api()
+#     random_user_agent =  get_random_user_agent()
+    
+#     with sync_playwright() as p:
+#         browser = p.chromium.launch(
+#             proxy={
+#                                     'server': random_proxy['server'],
+#                                     'username': random_proxy['username'],
+#                                     'password': random_proxy['password']
+#                                     },
+#                                     headless=True)  # Set headless=True for background execution
+        
+#         context = browser.new_context(
+#         user_agent= random_user_agent,
+#         viewport={'width': 1920, 'height': 1080}, # Set a common viewport size
+#         # locale="en-US" # Set a common locale
+#              )
+#         page = context.new_page()
+#         page.goto(url)
+
+#         try:
            
-            #Dew Point Button
-            page.wait_for_selector("button[aria-label='Show Dew Point']").click()
-            # Humidity Button
-            page.wait_for_selector("button[aria-label='Show Relative Humidity']").click()
-            #Chart Button
-            page.wait_for_selector("button[aria-label='View chart menu, Chart']").click()
-            #View Table
-            page.wait_for_selector("li.highcharts-menu-item:has-text('View data table')").click()
-            #Table
-            table = page.wait_for_selector('xpath=//table[@summary="Table representation of chart."]')
-            rows = table.query_selector_all('tbody tr')
+#             #Dew Point Button
+#             page.wait_for_selector("button[aria-label='Show Dew Point']").click()
+#             # Humidity Button
+#             page.wait_for_selector("button[aria-label='Show Relative Humidity']").click()
+#             #Chart Button
+#             page.wait_for_selector("button[aria-label='View chart menu, Chart']").click()
+#             #View Table
+#             page.wait_for_selector("li.highcharts-menu-item:has-text('View data table')").click()
+#             #Table
+#             table = page.wait_for_selector('xpath=//table[@summary="Table representation of chart."]')
+#             rows = table.query_selector_all('tbody tr')
 
 
-            data = {
-                'Temp': [],
-                'Datetime': []
-                    }
+#             data = {
+#                 'Temp': [],
+#                 'Datetime': []
+#                     }
             
-            for row in rows:
-                temp = row.query_selector('td').inner_text().strip()
-                datetime = row.query_selector('th').inner_text().strip()
+#             for row in rows:
+#                 temp = row.query_selector('td').inner_text().strip()
+#                 datetime = row.query_selector('th').inner_text().strip()
 
-                data['Temp'].append(temp)
-                data['Datetime'].append(datetime)
+#                 data['Temp'].append(temp)
+#                 data['Datetime'].append(datetime)
                 
-            scraped_df = pd.DataFrame(data)
-            scraped_df['Temp'] = scraped_df['Temp'].astype(float)
-            scraped_df['Datetime'] = pd.to_datetime(scraped_df['Datetime'])
+#             scraped_df = pd.DataFrame(data)
+#             scraped_df['Temp'] = scraped_df['Temp'].astype(float)
+#             scraped_df['Datetime'] = pd.to_datetime(scraped_df['Datetime'])
             
-            browser.close()
+#             browser.close()
 
-            temp = scraped_df['Temp']
-            datetime = scraped_df['Datetime']
-            # print(f'Temp: {temp[0]}, Datetime: {datetime[0]}')
-            return temp, datetime
+#             temp = scraped_df['Temp']
+#             datetime = scraped_df['Datetime']
+#             # print(f'Temp: {temp[0]}, Datetime: {datetime[0]}')
+#             return temp, datetime
                 
-        except Exception as e:
-            print(f"NWS Scrape: {e}")
+#         except Exception as e:
+#             print(f"NWS Scrape: {e}")
 
-        finally:
-            browser.close()            
+#         finally:
+#             browser.close()            
 
             
 def scrape_to_csv():
