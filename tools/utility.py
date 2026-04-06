@@ -210,9 +210,9 @@ def portfolio_history():
         'Profit/Loss': []
     }
     total = []
-    history = client.get_portfolio_settlements().get('settlements')
+    history = client.get_settlements().get('settlements')
     for i in history:
-         if i.get('yes_count') == 1:
+         if i.get('yes_count_fp') == '1.00':
         
             market = i.get('ticker').split('-')[0]
             
@@ -220,14 +220,19 @@ def portfolio_history():
 
             datetime_str = i.get('settled_time')
             date = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+            revenue = float(i.get('revenue') )
+            yes_total_cost_dollar = float(i.get('yes_total_cost_dollars'))
             
-            profit_loss = (i.get('revenue') - i.get('yes_total_cost'))/100
+            profit_loss = (revenue - yes_total_cost_dollar)/100
             total.append(profit_loss)
-            profit_loss_sign = f"-${abs(profit_loss)}" if profit_loss < 0 else f"+${profit_loss}"
+            # profit_loss_sign = f"-${abs(profit_loss)}:,.2f" if profit_loss < 0 else f"+${profit_loss}:,.2f"
+            sign = "+" if profit_loss >= 0 else "-"
+            profit_loss_sign = f"{sign}${abs(profit_loss):,.2f}"
             
-            fill_price = i.get('yes_total_cost')
-            fill_price_formatted = str(round(fill_price,1))
-            
+            fill_price = float(i.get('yes_total_cost_dollars'))
+            # fill_price_formatted = round(fill_price,1)
+            fill_price_formatted = f'${float(fill_price):,.2f}'
+                  
             table_dict['City'].append(city)
             table_dict['Market'].append(market)
             table_dict['Date'].append(date)
@@ -264,7 +269,7 @@ def portfolio_history():
     
 def historical_balances():
 
-    history = client.get_portfolio_settlements().get('settlements')
+    history = client.get_settlements().get('settlements')
     date_list = [i.get('settled_time') for i in history if i.get('yes_count_fp') == '1.00']
     start = min(date_list).split('T')[0]
     end = datetime.now().date().strftime('%Y-%m-%d')

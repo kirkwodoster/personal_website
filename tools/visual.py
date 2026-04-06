@@ -253,17 +253,19 @@ def history_of_returns():
    
     max_iterations = 0
     while max_iterations < 10:
-        time.sleep(3)
+        # time.sleep(3)
         try:
             max_iterations += 1
             
-            settlement_data = client.get_portfolio_settlements(cursor=cursor)
+            settlement_data = client.get_settlements(cursor=cursor)
             
             for item in settlement_data.get('settlements'):
                 
                 ticker = item.get('ticker').split('-')[0]
                 revenue = item.get('revenue')
-                filled_cost = item.get('yes_total_cost')
+                revenue = float(revenue)
+                filled_cost = item.get('yes_total_cost_dollars')
+                filled_cost = float(filled_cost)
                 
                 my_return = (revenue - filled_cost)/100
                 

@@ -207,7 +207,29 @@ class KalshiHttpClient(KalshiBaseClient):
         return self.get(self.markets_url + f'/{ticker}')
     
 
-    def get_portfolio_settlements(
+    # def get_portfolio_settlements(
+    #                               self,
+    #     ticker: Optional[str] = None,
+    #     event_ticker: Optional[str] = None,
+    #     limit: Optional[int] = None,
+    #     cursor: Optional[str] = None,
+    #     max_ts: Optional[int] = None,
+    #     min_ts: Optional[int] = None,
+    # ) -> Dict[str, Any]:
+    #     """Retrieves trades based on provided filters."""
+    #     params = {
+    #         'ticker': ticker,
+    #         'event_ticker': event_ticker,
+    #         'limit': limit,
+    #         'cursor': cursor,
+    #         'max_ts': max_ts,
+    #         'min_ts': min_ts,
+    #     }
+    #     # Remove None values
+    #     params = {k: v for k, v in params.items() if v is not None}
+    #     return self.get(self.portfolio_url + '/settlements', params=params)
+    
+    def get_settlements(
                                   self,
         ticker: Optional[str] = None,
         event_ticker: Optional[str] = None,
