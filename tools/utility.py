@@ -220,10 +220,9 @@ def portfolio_history():
 
             datetime_str = i.get('settled_time')
             date = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M:%S.%fZ').date()
-            revenue = float(i.get('revenue') )
+            revenue = float(i.get('revenue') ) / 100
             yes_total_cost_dollar = float(i.get('yes_total_cost_dollars'))
-            
-            profit_loss = (revenue - yes_total_cost_dollar)/100
+            profit_loss = (revenue - yes_total_cost_dollar)
             total.append(profit_loss)
             # profit_loss_sign = f"-${abs(profit_loss)}:,.2f" if profit_loss < 0 else f"+${profit_loss}:,.2f"
             sign = "+" if profit_loss >= 0 else "-"

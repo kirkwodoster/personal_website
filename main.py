@@ -31,9 +31,6 @@ pg = st.navigation(pages, position='top', expanded=True,)
 if __name__ == '__main__':
 
     pg.run()
-    # history = client.get_settlements().get('settlements')
-    # print(history)
+
     
-
-
 
