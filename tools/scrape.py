@@ -226,7 +226,7 @@ def scrape_to_csv():
         
     df_dict = []
     for loc in all_market_dict:
-            time.sleep(60)
+            # time.sleep(60)
         
             location = loc
             series = all_market_dict[loc].get("SERIES")

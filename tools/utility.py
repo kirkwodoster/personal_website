@@ -38,12 +38,14 @@ def yes_title(position: str):
                 city = i
                 
                 status = position.get('status')
-                maker = position.get('maker_fill_cost')
-                taker = position.get('taker_fill_cost')
+                maker = position.get('maker_fill_cost_dollars')
+                taker = position.get('taker_fill_cost_dollars')
                 limit = maker if taker == 0 else taker
+                print(limit,'.....................................................')
                 
                 try:
-                    current_ask = client.get_market_order_book(ticker=ticker).get('orderbook').get('yes')[-1][0]
+                    current_ask = client.get_market_order_book(ticker=ticker).get('orderbook_fp').get('yes_dollars')[-1][0]
+                    current_ask = float(current_ask)
                 except:
                     current_ask = 0
                     
@@ -70,12 +72,16 @@ def portfolio_tracker(position: dict):
                 city = i
                 
                 status = position.get('status')
-                maker = position.get('maker_fill_cost')
-                taker = position.get('taker_fill_cost')
-                limit = maker if taker == 0 else taker
+                maker = position.get('maker_fill_cost_dollars')
+                # taker = position.get('taker_fees_dollars')
+                # limit = maker if taker == 0 else taker
+                limit = float(maker)
+                limit = f'{limit:.2f}'
                 
                 try:
-                    current_ask = client.get_market_order_book(ticker=ticker).get('orderbook').get('yes')[-1][0]
+                    current_ask = client.get_market_order_book(ticker=ticker).get('orderbook_fp').get('yes_dollars')[-1][0]
+                    current_ask = float(current_ask)
+                    current_ask = f'{current_ask:.2f}'
                 except:
                     current_ask = 0
                     

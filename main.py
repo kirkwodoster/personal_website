@@ -31,6 +31,8 @@ pg = st.navigation(pages, position='top', expanded=True,)
 if __name__ == '__main__':
 
     pg.run()
+    # positions = client.get_positions().get('orders')[0:6]
+    # print(positions)
 
     
 
